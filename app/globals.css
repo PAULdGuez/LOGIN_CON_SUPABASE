@@ -525,3 +525,25 @@ a {
   font-size: 0.75rem;
   color: var(--color-gray-500);
 }
+
+/* Typewriter cursor animation */
+.typewriter-cursor {
+  display: inline-block;
+  animation: blink 0.8s infinite;
+  font-weight: 400;
+  color: var(--color-gray-900);
+  margin-left: 2px;
+}
+
+@keyframes blink {
+
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+  }
+}

@@ -150,7 +150,7 @@ export default function AdminUsersPage() {
             <ToggleSwitch
                 isActive={editEnabled}
                 onToggle={() => setEditEnabled(!editEnabled)}
-                label="Habilitar edición"
+                label="Editar Usuarios"
             />
 
             <UserTable
