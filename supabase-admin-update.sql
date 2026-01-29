@@ -25,9 +25,15 @@ BEGIN
     RAISE EXCEPTION 'Invalid role. Must be user or admin.';
   END IF;
   
+  -- Evitar que un admin cambie su propio rol
+  IF target_user_id = auth.uid() AND new_role != (SELECT role FROM profiles WHERE id = auth.uid()) THEN
+    RAISE EXCEPTION 'No puedes cambiar tu propio rol mientras estás logueado.';
+  END IF;
+  
   -- Actualizar el perfil
   UPDATE profiles 
   SET name = new_name, role = new_role 
   WHERE id = target_user_id;
 END;
 $$;
+

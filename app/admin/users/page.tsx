@@ -129,7 +129,9 @@ export default function AdminUsersPage() {
             await loadUsers()
         } catch (error) {
             console.error('Error saving user:', error)
-            alert('Error al guardar los cambios')
+            // Mostrar mensaje específico si viene de Supabase
+            const errorMessage = (error as { message?: string })?.message || 'Error al guardar los cambios'
+            alert(errorMessage)
         }
     }
 
