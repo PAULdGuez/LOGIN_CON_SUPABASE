@@ -278,10 +278,13 @@ a {
 /* Table styles */
 .table-container {
   overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
   background-color: var(--color-white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--color-gray-200);
+
 }
 
 .table {
@@ -433,7 +436,7 @@ a {
 }
 
 .welcome-title {
-  font-size: 2.5rem;
+  font-size: 6.5rem;
   font-weight: 700;
   color: var(--color-gray-900);
   margin-bottom: var(--spacing-md);
@@ -598,6 +601,10 @@ a {
 /* Audit Log styles */
 .audit-log-container {
   margin-top: var(--spacing-xl);
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
 }
 
 .audit-log-loading,

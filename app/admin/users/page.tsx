@@ -226,7 +226,7 @@ export default function AdminUsersPage() {
                 <ToggleSwitch
                     isActive={showAuditLog}
                     onToggle={() => setShowAuditLog(!showAuditLog)}
-                    label="Historial de Cambios"
+                    label="Ver Historial de Cambios"
                 />
             </div>
 

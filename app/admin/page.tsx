@@ -30,7 +30,7 @@ export default function AdminDashboard() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [supabase])
 
-    const welcomeText = profile ? `Bienvenido Administrador, ${profile.name}` : '...'
+    const welcomeText = profile ? `Bienvenido Administrador, ${profile.name} 😊` : '...'
 
     return (
         <div className="welcome-container">

@@ -30,7 +30,7 @@ export default function UserDashboard() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [supabase])
 
-    const welcomeText = profile ? `Bienvenido Usuario, ${profile.name}` : '...'
+    const welcomeText = profile ? `Bienvenido Usuario, ${profile.name}😊` : '...'
 
     return (
         <div className="welcome-container">
