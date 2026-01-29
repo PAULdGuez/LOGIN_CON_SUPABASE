@@ -16,3 +16,16 @@ export interface SidebarItem {
     href: string
     icon?: string
 }
+
+export interface AuditLog {
+    id: string
+    action: 'INSERT' | 'UPDATE' | 'DELETE'
+    table_name: string
+    record_id: string
+    old_data: Record<string, unknown> | null
+    new_data: Record<string, unknown> | null
+    changed_by: string | null
+    changed_by_name: string | null
+    changed_at: string
+}
+
