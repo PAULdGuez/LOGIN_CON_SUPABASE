@@ -97,7 +97,7 @@ export default function AdminUsersPage() {
 
     // Realtime subscription for profiles
     useEffect(() => {
-        console.log('🔄 Setting up Realtime subscription...')
+        console.log('Setting up Realtime subscription...')
 
         const channel = supabase
             .channel('profiles-changes')
@@ -109,7 +109,7 @@ export default function AdminUsersPage() {
                     table: 'profiles'
                 },
                 async (payload) => {
-                    console.log('📡 Realtime event received:', payload.eventType, payload)
+                    console.log('Realtime event received:', payload.eventType, payload)
                     const updatedUsers = await loadUsers()
                     setUsers(updatedUsers)
 
@@ -120,7 +120,7 @@ export default function AdminUsersPage() {
                 }
             )
             .subscribe((status) => {
-                console.log('📡 Realtime subscription status:', status)
+                console.log('Realtime subscription status:', status)
                 if (status === 'SUBSCRIBED') {
                     setRealtimeStatus('connected')
                 } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
@@ -131,7 +131,7 @@ export default function AdminUsersPage() {
             })
 
         return () => {
-            console.log('🔄 Cleaning up Realtime subscription...')
+            console.log('Cleaning up Realtime subscription...')
             supabase.removeChannel(channel)
         }
     }, [supabase, loadUsers, loadAuditLogs, showAuditLog])

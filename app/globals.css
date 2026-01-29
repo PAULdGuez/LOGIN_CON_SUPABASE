@@ -601,7 +601,6 @@ a {
 /* Audit Log styles */
 .audit-log-container {
   margin-top: var(--spacing-xl);
-  max-height: 400px;
   overflow-y: auto;
   border: 1px solid var(--color-gray-200);
   border-radius: var(--radius-lg);
