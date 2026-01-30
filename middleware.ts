@@ -42,18 +42,15 @@ export async function middleware(request: NextRequest) {
 
     // If user is logged in, check role and redirect accordingly
     if (user && (pathname.startsWith('/admin') || pathname.startsWith('/user'))) {
-        const { data: profile, error } = await supabase
+        const { data: profile } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', user.id)
             .single()
 
-        console.log('Middleware - User ID:', user.id, 'Profile:', profile, 'Error:', error)
-
         if (profile) {
             // Admin trying to access user pages
             if (pathname.startsWith('/user') && profile.role === 'admin') {
-                console.log('Redirecting admin from /user to /admin')
                 const url = request.nextUrl.clone()
                 url.pathname = '/admin'
                 return NextResponse.redirect(url)
@@ -70,13 +67,11 @@ export async function middleware(request: NextRequest) {
 
     // Redirect logged in users away from login page
     if (user && pathname === '/') {
-        const { data: profile, error } = await supabase
+        const { data: profile } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', user.id)
             .single()
-
-        console.log('Middleware (login redirect) - Profile:', profile, 'Error:', error)
 
         const url = request.nextUrl.clone()
         url.pathname = profile?.role === 'admin' ? '/admin' : '/user'

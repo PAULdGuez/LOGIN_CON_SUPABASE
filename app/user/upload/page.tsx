@@ -74,7 +74,7 @@ export default function UploadPage() {
                 retryTimeout = setTimeout(connect, 3000);
             };
 
-            ws.onerror = (err) => {
+            ws.onerror = () => {
                 // Suppress verbose error logging for connection refused (common in dev state)
                 console.warn('WebSocket connection error. Is the backend running?');
                 ws?.close();
