@@ -1,12 +1,47 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { UploadedFile } from '@/lib/types'
+import ToggleSwitch from '@/components/ToggleSwitch'
 
 export default function UploadPage() {
     const [file, setFile] = useState<File | null>(null)
     const [uploading, setUploading] = useState(false)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+    const [files, setFiles] = useState<UploadedFile[]>([])
+    const [loadingFiles, setLoadingFiles] = useState(true)
+    const [listView, setListView] = useState(false)
+    const [userId, setUserId] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const supabase = useMemo(() => createClient(), [])
+
+    useEffect(() => {
+        async function getUser() {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                setUserId(user.id)
+                fetchFiles(user.id)
+            }
+        }
+        getUser()
+    }, [supabase])
+
+    const fetchFiles = async (currentUserId: string) => {
+        setLoadingFiles(true)
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/files/${currentUserId}`)
+            if (response.ok) {
+                const data = await response.json()
+                setFiles(data)
+            }
+        } catch (error) {
+            console.error('Error fetching files:', error)
+        } finally {
+            setLoadingFiles(false)
+        }
+    }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -16,7 +51,7 @@ export default function UploadPage() {
     }
 
     const handleUpload = async () => {
-        if (!file) {
+        if (!file || !userId) {
             setMessage({ type: 'error', text: 'Por favor selecciona un archivo primero' })
             return
         }
@@ -27,6 +62,7 @@ export default function UploadPage() {
         try {
             const formData = new FormData()
             formData.append("file", file)
+            formData.append("user_id", userId)
 
             const response = await fetch("http://127.0.0.1:8000/upload", {
                 method: "POST",
@@ -34,11 +70,14 @@ export default function UploadPage() {
             })
 
             if (response.ok) {
+                await response.json()
                 setMessage({ type: 'success', text: `Archivo "${file.name}" subido exitosamente` })
                 setFile(null)
                 if (fileInputRef.current) {
                     fileInputRef.current.value = ''
                 }
+                // Refresh list
+                fetchFiles(userId)
             } else {
                 const errorText = await response.text()
                 setMessage({ type: 'error', text: `Error al subir archivo: ${errorText || response.statusText}` })
@@ -94,7 +133,7 @@ export default function UploadPage() {
             <button
                 className="btn btn-primary upload-btn"
                 onClick={handleUpload}
-                disabled={!file || uploading}
+                disabled={!file || uploading || !userId}
             >
                 {uploading ? 'Subiendo...' : 'Subir Archivo'}
             </button>
@@ -104,6 +143,60 @@ export default function UploadPage() {
                     {message.type === 'success' ? '✅' : '❌'} {message.text}
                 </div>
             )}
+
+            <div style={{ marginTop: '2rem', borderTop: '1px solid #e5e7eb', paddingTop: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h3 className="text-lg font-semibold">Mis Archivos</h3>
+                    <ToggleSwitch
+                        isActive={listView}
+                        onToggle={() => setListView(!listView)}
+                        label={listView ? "Vista de Lista" : "Vista de Cuadrícula"}
+                    />
+                </div>
+
+                {loadingFiles ? (
+                    <p className="text-center text-gray-500">Cargando archivos...</p>
+                ) : files.length === 0 ? (
+                    <p className="text-center text-gray-500">No hay archivos subidos</p>
+                ) : (
+                    <div style={listView ? { display: 'flex', flexDirection: 'column', gap: '0.5rem' } : { display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                        {files.map((f, index) => (
+                            <div
+                                key={index}
+                                className={`border rounded-lg hover:shadow-md transition-shadow ${listView ? 'flex items-center px-4 py-1 gap-4' : 'p-2'}`}
+                                style={listView ? { height: '30px', width: '100%' } : { width: '150px' }}
+                            >
+                                {!listView && (
+                                    <div
+                                        className="bg-gray-100 rounded-md mb-2 overflow-hidden flex items-center justify-center"
+                                        style={{ width: '100%', height: '110px' }}
+                                    >
+                                        {f.filename.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                                            /* eslint-disable-next-line @next/next/no-img-element */
+                                            <img
+                                                src={f.url}
+                                                alt={f.filename}
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                        ) : (
+                                            <span className="text-4xl">📄</span>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="flex-1 min-w-0 flex items-center gap-2">
+                                    {listView && (
+                                        <span className="text-lg leading-none">
+                                            {f.filename.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? '🖼️' : '📄'}
+                                        </span>
+                                    )}
+                                    <p className="text-xs truncate font-medium" title={f.filename}>{f.filename}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

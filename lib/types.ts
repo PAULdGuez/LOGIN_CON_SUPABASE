@@ -29,3 +29,10 @@ export interface AuditLog {
     changed_at: string
 }
 
+export interface UploadedFile {
+    user_id: string
+    filename: string
+    stored_filename: string
+    url: string
+}
+
