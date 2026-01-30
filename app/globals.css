@@ -669,3 +669,84 @@ a {
   margin-bottom: var(--spacing-lg);
   flex-wrap: wrap;
 }
+
+/* Upload section styles */
+.upload-dropzone {
+  border: 2px dashed var(--color-gray-400);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-2xl);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  background-color: var(--color-gray-50);
+  margin-bottom: var(--spacing-lg);
+}
+
+.upload-dropzone:hover {
+  border-color: var(--color-gray-900);
+  background-color: var(--color-gray-100);
+}
+
+.upload-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.upload-text {
+  font-size: 1rem;
+  color: var(--color-gray-600);
+  margin-bottom: var(--spacing-sm);
+}
+
+.upload-file-info {
+  font-size: 0.875rem;
+  color: var(--color-gray-500);
+}
+
+.upload-btn {
+  width: 100%;
+  padding: var(--spacing-md);
+  font-size: 1rem;
+}
+
+.upload-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--shadow-3d);
+}
+
+.upload-message {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+.upload-message.success {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #22c55e;
+}
+
+.upload-message.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+/* Dashboard card for upload */
+.dashboard-card {
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-gray-200);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-xl);
+}
+
+.dashboard-card .card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+  margin-bottom: var(--spacing-lg);
+}

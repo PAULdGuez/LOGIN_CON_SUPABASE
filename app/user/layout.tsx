@@ -8,6 +8,7 @@ import { Profile, SidebarItem } from '@/lib/types'
 
 const userMenuItems: SidebarItem[] = [
     { label: 'PRINCIPAL', href: '/user', icon: '🏠' },
+    { label: 'SUBIR ARCHIVOS', href: '/user/upload', icon: '📤' },
 ]
 
 export default function UserLayout({

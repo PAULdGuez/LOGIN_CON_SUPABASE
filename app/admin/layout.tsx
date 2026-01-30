@@ -9,6 +9,7 @@ import { Profile, SidebarItem } from '@/lib/types'
 const adminMenuItems: SidebarItem[] = [
     { label: 'PRINCIPAL', href: '/admin', icon: '🏠' },
     { label: 'ADMINISTRAR USUARIOS', href: '/admin/users', icon: '👥' },
+    { label: 'SUBIR ARCHIVOS', href: '/admin/upload', icon: '📤' },
 ]
 
 export default function AdminLayout({
