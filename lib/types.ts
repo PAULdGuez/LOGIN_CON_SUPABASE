@@ -34,5 +34,6 @@ export interface UploadedFile {
     filename: string
     stored_filename: string
     url: string
+    user_name?: string
 }
 

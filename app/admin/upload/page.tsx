@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { UploadedFile } from '@/lib/types'
 import ToggleSwitch from '@/components/ToggleSwitch'
@@ -17,8 +17,59 @@ export default function UploadPage() {
     const [userId, setUserId] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    const [userProfiles, setUserProfiles] = useState<Record<string, string>>({})
+    const [refreshTrigger, setRefreshTrigger] = useState(0)
+
     // Create supabase client once
     const supabase = useMemo(() => createClient(), [])
+
+
+    const fetchProfiles = useCallback(async () => {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, name')
+
+            if (error) {
+                console.error('Error fetching profiles:', error)
+                return
+            }
+
+            if (data) {
+                const profilesMap: Record<string, string> = {}
+                data.forEach((profile) => {
+                    profilesMap[profile.id] = profile.name || 'Unknown'
+                })
+                setUserProfiles(profilesMap)
+            }
+        } catch (error) {
+            console.error('Error in fetchProfiles:', error)
+        }
+    }, [supabase])
+
+    const fetchFiles = useCallback(async (currentUserId: string, isViewAll: boolean) => {
+        setLoadingFiles(true)
+        try {
+            const endpoint = isViewAll
+                ? 'http://127.0.0.1:8000/files/all'
+                : `http://127.0.0.1:8000/files/${currentUserId}`
+
+            // Ensure no caching to prevent data leaks or stale data
+            const response = await fetch(endpoint, { cache: 'no-store' })
+            if (response.ok) {
+                const data = await response.json()
+                setFiles(data)
+            } else {
+                console.error('Failed to fetch files:', response.status, response.statusText)
+                setFiles([])
+            }
+        } catch (error) {
+            console.error('Error fetching files:', error)
+            setFiles([])
+        } finally {
+            setLoadingFiles(false)
+        }
+    }, [])
 
     useEffect(() => {
         async function getUser() {
@@ -34,30 +85,54 @@ export default function UploadPage() {
             }
         }
         getUser()
-    }, [supabase, viewAll])
+        fetchProfiles()
+    }, [supabase, viewAll, fetchFiles, fetchProfiles, refreshTrigger])
 
-    const fetchFiles = async (currentUserId: string, isViewAll: boolean) => {
-        setLoadingFiles(true)
-        try {
-            const endpoint = isViewAll
-                ? 'http://127.0.0.1:8000/files/all'
-                : `http://127.0.0.1:8000/files/${currentUserId}`
+    // WebSocket connection
+    useEffect(() => {
+        let ws: WebSocket | null = null;
+        let retryTimeout: NodeJS.Timeout;
 
-            const response = await fetch(endpoint)
-            if (response.ok) {
-                const data = await response.json()
-                setFiles(data)
-            } else {
-                console.error('Failed to fetch files:', response.status, response.statusText)
-                setFiles([])
+        const connect = () => {
+            ws = new WebSocket('ws://127.0.0.1:8000/ws');
+
+            ws.onopen = () => {
+                console.log('Connected to WebSocket');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.event === 'new_file') {
+                        setRefreshTrigger(prev => prev + 1);
+                    }
+                } catch (e) {
+                    console.error('Error parsing WS message', e);
+                }
+            };
+
+            ws.onclose = () => {
+                // Retry silently to avoid console spam if backend is down
+                retryTimeout = setTimeout(connect, 3000);
+            };
+
+            ws.onerror = (err) => {
+                // Suppress verbose error logging for connection refused (common in dev state)
+                console.warn('WebSocket connection error. Is the backend running?');
+                ws?.close();
             }
-        } catch (error) {
-            console.error('Error fetching files:', error)
-            setFiles([])
-        } finally {
-            setLoadingFiles(false)
+        };
+
+        connect();
+
+        return () => {
+            if (ws) {
+                ws.onclose = null; // Prevent retry on unmount
+                ws.close();
+            }
+            clearTimeout(retryTimeout);
         }
-    }
+    }, [])
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -118,6 +193,9 @@ export default function UploadPage() {
             setMessage(null)
         }
     }
+
+    // Safety Filter: Ensure we only show allowed files based on viewAll state
+    const displayedFiles = files.filter(f => viewAll || f.user_id === userId);
 
     return (
         <div className="dashboard-card">
@@ -193,11 +271,11 @@ export default function UploadPage() {
                     <>
                         {loadingFiles ? (
                             <p className="text-center text-gray-500">Cargando archivos...</p>
-                        ) : files.length === 0 ? (
+                        ) : displayedFiles.length === 0 ? (
                             <p className="text-center text-gray-500">No hay archivos subidos</p>
                         ) : (
                             <div style={listView ? { display: 'flex', flexDirection: 'column', gap: '0.5rem' } : { display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-                                {files.map((f, index) => (
+                                {displayedFiles.map((f, index) => (
                                     <div
                                         key={index}
                                         className="border rounded-lg hover:shadow-md transition-shadow"
@@ -241,11 +319,17 @@ export default function UploadPage() {
                                                 <p className="text-xs truncate font-medium" style={{ margin: 0 }} title={f.filename}>{f.filename}</p>
                                             </div>
                                             {viewAll && listView && (
-                                                <p className="text-xs text-gray-500 truncate" style={{ marginLeft: '1rem', margin: 0 }}>User: {f.user_id.slice(0, 8)}...</p>
+                                                <p className="text-xs text-gray-500 truncate" style={{ marginLeft: '1rem', margin: 0 }}>
+                                                    User: {userProfiles[f.user_id] || f.user_id.slice(0, 8) + '...'}
+                                                </p>
                                             )}
                                         </div>
 
-                                        {!listView && viewAll && <p className="text-xs text-gray-500 truncate">User: {f.user_id.slice(0, 8)}...</p>}
+                                        {!listView && viewAll && (
+                                            <p className="text-xs text-gray-500 truncate">
+                                                User: {userProfiles[f.user_id] || f.user_id.slice(0, 8) + '...'}
+                                            </p>
+                                        )}
                                     </div>
                                 ))}
                             </div>

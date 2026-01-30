@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { UploadedFile } from '@/lib/types'
 import ToggleSwitch from '@/components/ToggleSwitch'
@@ -15,7 +15,25 @@ export default function UploadPage() {
     const [userId, setUserId] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    const [refreshTrigger, setRefreshTrigger] = useState(0)
+
     const supabase = useMemo(() => createClient(), [])
+
+    const fetchFiles = useCallback(async (currentUserId: string) => {
+        setLoadingFiles(true)
+        try {
+            // Ensure no caching to prevent data leaks or stale data
+            const response = await fetch(`http://127.0.0.1:8000/files/${currentUserId}`, { cache: 'no-store' })
+            if (response.ok) {
+                const data = await response.json()
+                setFiles(data)
+            }
+        } catch (error) {
+            console.error('Error fetching files:', error)
+        } finally {
+            setLoadingFiles(false)
+        }
+    }, [])
 
     useEffect(() => {
         async function getUser() {
@@ -26,22 +44,53 @@ export default function UploadPage() {
             }
         }
         getUser()
-    }, [supabase])
+    }, [supabase, fetchFiles, refreshTrigger])
 
-    const fetchFiles = async (currentUserId: string) => {
-        setLoadingFiles(true)
-        try {
-            const response = await fetch(`http://127.0.0.1:8000/files/${currentUserId}`)
-            if (response.ok) {
-                const data = await response.json()
-                setFiles(data)
+    // WebSocket connection
+    useEffect(() => {
+        let ws: WebSocket | null = null;
+        let retryTimeout: NodeJS.Timeout;
+
+        const connect = () => {
+            ws = new WebSocket('ws://127.0.0.1:8000/ws');
+
+            ws.onopen = () => {
+                console.log('Connected to WebSocket');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.event === 'new_file') {
+                        setRefreshTrigger(prev => prev + 1);
+                    }
+                } catch (e) {
+                    console.error('Error parsing WS message', e);
+                }
+            };
+
+            ws.onclose = () => {
+                // Retry silently to avoid console spam if backend is down
+                retryTimeout = setTimeout(connect, 3000);
+            };
+
+            ws.onerror = (err) => {
+                // Suppress verbose error logging for connection refused (common in dev state)
+                console.warn('WebSocket connection error. Is the backend running?');
+                ws?.close();
             }
-        } catch (error) {
-            console.error('Error fetching files:', error)
-        } finally {
-            setLoadingFiles(false)
+        };
+
+        connect();
+
+        return () => {
+            if (ws) {
+                ws.onclose = null; // Prevent retry on unmount
+                ws.close();
+            }
+            clearTimeout(retryTimeout);
         }
-    }
+    }, [])
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
