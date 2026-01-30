@@ -164,7 +164,7 @@ export default function UploadPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 className="text-lg font-semibold">Galería de Archivos</h3>
-                        <div className="flex items-center gap-4">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                             <ToggleSwitch
                                 isActive={showGallery}
                                 onToggle={() => setShowGallery(!showGallery)}
@@ -174,7 +174,7 @@ export default function UploadPage() {
                     </div>
 
                     {showGallery && (
-                        <div className="flex justify-end gap-4">
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', alignItems: 'center' }}>
                             <ToggleSwitch
                                 isActive={listView}
                                 onToggle={() => setListView(!listView)}
@@ -183,7 +183,7 @@ export default function UploadPage() {
                             <ToggleSwitch
                                 isActive={viewAll}
                                 onToggle={() => setViewAll(!viewAll)}
-                                label="Ver archivos de todos los usuarios"
+                                label="Ver todos"
                             />
                         </div>
                     )}
@@ -200,8 +200,18 @@ export default function UploadPage() {
                                 {files.map((f, index) => (
                                     <div
                                         key={index}
-                                        className={`border rounded-lg hover:shadow-md transition-shadow ${listView ? 'flex items-center px-4 py-1 gap-4' : 'p-2'}`}
-                                        style={listView ? { height: '30px', width: '100%' } : { width: '150px' }}
+                                        className="border rounded-lg hover:shadow-md transition-shadow"
+                                        style={listView ? {
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '0 1rem',
+                                            height: '30px',
+                                            width: '100%',
+                                            gap: '1rem'
+                                        } : {
+                                            width: '150px',
+                                            padding: '0.5rem'
+                                        }}
                                     >
                                         {!listView && (
                                             <div
@@ -221,17 +231,17 @@ export default function UploadPage() {
                                             </div>
                                         )}
 
-                                        <div className="flex-1 min-w-0 flex items-center justify-between">
-                                            <div className="flex items-center gap-2 min-w-0">
+                                        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
                                                 {listView && (
-                                                    <span className="text-lg leading-none">
+                                                    <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>
                                                         {f.filename.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? '🖼️' : '📄'}
                                                     </span>
                                                 )}
-                                                <p className="text-xs truncate font-medium" title={f.filename}>{f.filename}</p>
+                                                <p className="text-xs truncate font-medium" style={{ margin: 0 }} title={f.filename}>{f.filename}</p>
                                             </div>
                                             {viewAll && listView && (
-                                                <p className="text-xs text-gray-500 truncate ml-4">User: {f.user_id.slice(0, 8)}...</p>
+                                                <p className="text-xs text-gray-500 truncate" style={{ marginLeft: '1rem', margin: 0 }}>User: {f.user_id.slice(0, 8)}...</p>
                                             )}
                                         </div>
 
